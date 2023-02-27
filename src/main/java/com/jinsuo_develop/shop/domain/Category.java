@@ -7,6 +7,9 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static javax.persistence.CascadeType.*;
+import static javax.persistence.FetchType.*;
+
 @Entity
 @Getter @Setter
 public class Category {
@@ -16,10 +19,10 @@ public class Category {
 
     private String name;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
-    private List<ItemCategory> itemCategories = new ArrayList<>();
+    @OneToMany(mappedBy = "category", cascade = ALL)
+    private List<ProductCategory> itemCategories = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "parent_id")
     private Category parent;
 

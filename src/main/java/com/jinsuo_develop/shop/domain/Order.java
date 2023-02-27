@@ -1,5 +1,6 @@
 package com.jinsuo_develop.shop.domain;
 
+import com.jinsuo_develop.shop.domain.base.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +12,7 @@ import java.util.List;
 @Entity
 @Table(name = "orders")
 @Getter @Setter
-public class Order {
+public class Order extends BaseEntity {
     @Id @GeneratedValue
     @Column(name = "order_id")
     private Long id;

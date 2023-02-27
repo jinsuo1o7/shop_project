@@ -33,6 +33,6 @@ public class MemberService {
     }
 
     public Member findOne(Long id) {
-        return repository.findById(id);
+        return repository.findById(id).get();
     }
 }
