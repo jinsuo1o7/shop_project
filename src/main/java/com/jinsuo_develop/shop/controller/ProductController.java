@@ -7,11 +7,16 @@ import com.jinsuo_develop.shop.domain.clothes.SizeType;
 import com.jinsuo_develop.shop.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static com.jinsuo_develop.shop.domain.clothes.Clothes.createClothes;
 
 @Slf4j
 @RestController
@@ -21,7 +26,9 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping("/new")
+    @CrossOrigin(origins = "http://localhost:3000", methods = RequestMethod.POST)
     public OkResponse addProduct(@Valid @RequestBody AddProductRequest request) {
+        log.info("{}", request);
         Product product = null;
         Long id = null;
 
@@ -30,25 +37,25 @@ public class ProductController {
             id = productService.saveClothesProduct((Clothes) product, request.getCategories());
 
             for (SizeAndStock sizeAndStock : request.getSizeAndStocks()) {
-                SizeType sizeType = SizeType.valueOf(sizeAndStock.getSizeType().toUpperCase());
-                int quantity = sizeAndStock.getStockQuantity();
-                productService.saveClothesSizeAndStock((Clothes) product, sizeType, quantity);
+                Integer quantity = sizeAndStock.getStockQuantity();
+                if(quantity != null) {
+                    SizeType sizeType = SizeType.valueOf(sizeAndStock.getSizeType().toUpperCase());
+                    productService.saveClothesSizeAndStock((Clothes) product, sizeType, quantity);
+                }
             }
         }
         return new OkResponse("product added!" + id);
     }
 
     @GetMapping
-    public List<ProductsResponse> getProducts() {
-        List<Product> allProduct = productService.findAllProduct();
-        return allProduct.stream().map(ProductsResponse::new)
-                .collect(Collectors.toList());
+    public Page<ProductsResponse> getProducts(@PageableDefault(size = 12, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return productService.findAllProduct(pageable)
+                .map(ProductsResponse::new);
     }
 
     @GetMapping("/{id}")
-    public ProductDetailResponse getProductDetail(@PathVariable Long id) {
-        Product product = productService.findOneProduct(id);
-        return new ProductDetailResponse((Clothes) product);
+    public ProductDetailResponse findProductDetail(@PathVariable Long id) {
+        return productService.findProductCategory(id);
     }
 
     @PatchMapping("/{id}")
@@ -63,12 +70,17 @@ public class ProductController {
         return new OkResponse("ok");
     }
 
-    private static Product createClothes(AddProductRequest request) {
-        Clothes clothes = new Clothes();
-        clothes.setImageUrl(request.getImageUrl());
-        clothes.setName(request.getName());
-        clothes.setDescription(request.getDescription());
-        clothes.setPrice(request.getPrice());
-        return clothes;
+    @PatchMapping("/{id}/sizes")
+    public OkResponse updateSize(@PathVariable Long id, @Valid @RequestBody List<SizeAndStock> sizeAndStock) {
+        productService.updateSizeAndStock(id, sizeAndStock);
+        return new OkResponse("ok");
     }
+
+    @DeleteMapping("{id}")
+    public OkResponse deleteProduct(@PathVariable Long id) {
+        log.info("delete : {}", id);
+        productService.deleteProduct(id);
+        return new OkResponse("ok");
+    }
+
 }

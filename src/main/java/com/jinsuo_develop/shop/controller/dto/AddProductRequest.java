@@ -1,13 +1,15 @@
 package com.jinsuo_develop.shop.controller.dto;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import java.util.ArrayList;
 import java.util.List;
 
-@Getter
+@Data
 @NoArgsConstructor
 public class AddProductRequest {
     @Enumerated(EnumType.STRING)

@@ -1,6 +1,6 @@
 package com.jinsuo_develop.shop.controller.dto;
 
-import lombok.AccessLevel;
+import com.jinsuo_develop.shop.domain.clothes.SizeType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,7 +8,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SizeAndStock {
+public class SizeDto {
     private String sizeType;
-    private Integer stockQuantity;
+
+    public SizeDto(SizeType sizeType) {
+        this.sizeType = sizeType.name();
+    }
 }

@@ -31,7 +31,7 @@ class ProductCategoryRepositoryTest {
         categoryRepository.save(category);
 
         ProductCategory productCategory = new ProductCategory();
-        productCategory.setCategory(category);
+        productCategory.changeCategory(category);
         productCategoryRepository.save(productCategory);
 
         em.flush();
@@ -55,8 +55,8 @@ class ProductCategoryRepositoryTest {
         productRepository.save(product);
 
         ProductCategory productCategory = new ProductCategory();
-        productCategory.setCategory(category);
-        productCategory.setProduct(product);
+        productCategory.changeCategory(category);
+        productCategory.changeProduct(product);
         productCategoryRepository.save(productCategory);
 
         em.flush();

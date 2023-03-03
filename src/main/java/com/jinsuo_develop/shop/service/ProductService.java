@@ -1,5 +1,7 @@
 package com.jinsuo_develop.shop.service;
 
+import com.jinsuo_develop.shop.controller.dto.ProductDetailResponse;
+import com.jinsuo_develop.shop.controller.dto.SizeAndStock;
 import com.jinsuo_develop.shop.controller.dto.UpdateProductCategoryRequest;
 import com.jinsuo_develop.shop.controller.dto.UpdateProductRequest;
 import com.jinsuo_develop.shop.domain.Category;
@@ -12,13 +14,17 @@ import com.jinsuo_develop.shop.domain.clothes.SizeType;
 import com.jinsuo_develop.shop.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.jinsuo_develop.shop.domain.ProductCategory.*;
+import static com.jinsuo_develop.shop.domain.clothes.ClothesSize.*;
 
 @Slf4j
 @Service
@@ -41,25 +47,43 @@ public class ProductService {
     @Transactional
     public void saveClothesSizeAndStock(Clothes clothes, SizeType sizeType, int quantity) {
         Size size = sizeRepository.findBySizeType(sizeType).orElseThrow();
-        ClothesSize clothesSize = ClothesSize.createClothesSize(clothes, size, quantity);
+        ClothesSize clothesSize = createClothesSize(clothes, size, quantity);
         clothesSizeRepository.save(clothesSize);
     }
 
     private void setClothesCategories(Clothes clothes, List<String> categories) {
         for (String name : categories) {
             Category category = categoryRepository.findByName(name).orElseThrow();
-            ProductCategory productCategory = createProductCategory(category);
-            productCategory.setProduct(clothes);
+            ProductCategory productCategory = createProductCategory(clothes, category);
             productCategoryRepository.save(productCategory);
         }
     }
 
-    public List<Product> findAllProduct() {
-        return productRepository.findAll();
+    public Page<Product> findAllProduct(Pageable pageable) {
+        return productRepository.findAll(pageable);
     }
 
     public Product findOneProduct(Long id) {
-        return productRepository.findById(id).get();
+        return productRepository.findById(id).orElseThrow();
+    }
+
+    public ProductDetailResponse findProductCategory(Long productId) {
+        Product product = productRepository.findById(productId).orElseThrow();
+        ProductDetailResponse response = new ProductDetailResponse(product);
+
+        List<ProductCategory> productCategories = productCategoryRepository.findByProductId(productId);
+        List<ClothesSize> clothesSizes = clothesSizeRepository.findByClothesId(productId);
+
+        for (ProductCategory pc : productCategories) {
+            response.getCategories().add(pc.getCategory().getName());
+        }
+        for (ClothesSize cz : clothesSizes) {
+            int stockQuantity = cz.getStockQuantity();
+            String size = cz.getSize().getSizeType().toString();
+            response.getSizeAndStocks().add(new SizeAndStock(size, stockQuantity));
+        }
+
+        return response;
     }
 
     @Transactional
@@ -74,11 +98,10 @@ public class ProductService {
     @Transactional
     public void updateProductCategory(Long id, UpdateProductCategoryRequest request) {
         Product product = productRepository.findById(id).orElseThrow();
-        List<ProductCategory> productCategories = productCategoryRepository.findByProduct(product);
-        List<String> categories = request.getCategories();
+        List<ProductCategory> productCategories = productCategoryRepository.findByProductId(id);
         List<Category> categoryList = new ArrayList<>();
 
-        for (String name : categories) {
+        for (String name : request.getCategories()) {
             Category category = categoryRepository.findByName(name).orElseThrow();
             categoryList.add(category);
         }
@@ -91,11 +114,34 @@ public class ProductService {
 
         for (Category category : categoryList) {
             if (productCategories.stream().noneMatch(pc -> pc.getCategory().equals(category))) {
-                ProductCategory productCategory = new ProductCategory();
-                productCategory.setProduct(product);
-                productCategory.setCategory(category);
+                ProductCategory productCategory = new ProductCategory(product, category);
                 productCategoryRepository.save(productCategory);
             }
+        }
+    }
+
+    @Transactional
+    public void updateSizeAndStock(Long id, List<SizeAndStock> sizeAndStock) {
+        Product product = productRepository.findById(id).orElseThrow();
+
+        // Delete all existing ClothesSize entities for the product
+        clothesSizeRepository.deleteByClothesId(id);
+
+        for (SizeAndStock sa : sizeAndStock) {
+            SizeType st = SizeType.valueOf(sa.getSizeType().toUpperCase());
+            Size size = sizeRepository.findBySizeType(st).orElseThrow();
+            ClothesSize newClothesSize = createClothesSize((Clothes) product, size, sa.getStockQuantity());
+            clothesSizeRepository.save(newClothesSize);
+        }
+    }
+
+    @Transactional
+    public void deleteProduct(Long id) {
+        Optional<Product> productOptional = productRepository.findById(id);
+        if (productOptional.isPresent()) {
+            Clothes clothes = (Clothes) productOptional.get();
+            clothesSizeRepository.deleteByClothes(clothes); // Delete related records in clothes_size table
+            productRepository.delete(clothes); // Delete the product
         }
     }
 }

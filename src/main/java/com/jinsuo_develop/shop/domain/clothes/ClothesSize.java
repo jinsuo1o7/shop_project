@@ -1,12 +1,15 @@
 package com.jinsuo_develop.shop.domain.clothes;
 
 import com.jinsuo_develop.shop.exception.NotEnoughStockException;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
 @Entity
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ClothesSize {
     @Id @GeneratedValue
     @Column(name = "clothes_size_id")
@@ -19,8 +22,13 @@ public class ClothesSize {
     @JoinColumn(name = "clothes_id")
     private Clothes clothes;
 
+    public ClothesSize(Clothes clothes, Size size) {
+        this.clothes = clothes;
+        this.size = size;
+    }
+
     public static ClothesSize createClothesSize(Clothes clothes, Size size, int stockQuantity) {
-        ClothesSize clothesSize = new ClothesSize();
+        ClothesSize clothesSize = new ClothesSize(clothes, size);
         clothesSize.changeClothes(clothes);
         clothesSize.changeSize(size);
         clothesSize.changeQuantity(stockQuantity);

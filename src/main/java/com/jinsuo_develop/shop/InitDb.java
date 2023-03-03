@@ -1,14 +1,12 @@
 package com.jinsuo_develop.shop;
 
 import com.jinsuo_develop.shop.domain.Category;
+import com.jinsuo_develop.shop.domain.Product;
 import com.jinsuo_develop.shop.domain.ProductCategory;
 import com.jinsuo_develop.shop.domain.clothes.Clothes;
 import com.jinsuo_develop.shop.domain.clothes.ClothesSize;
 import com.jinsuo_develop.shop.domain.clothes.Size;
-import com.jinsuo_develop.shop.repository.CategoryRepository;
-import com.jinsuo_develop.shop.repository.ClothesSizeRepository;
-import com.jinsuo_develop.shop.repository.ProductRepository;
-import com.jinsuo_develop.shop.repository.SizeRepository;
+import com.jinsuo_develop.shop.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,20 +23,22 @@ public class InitDb {
     private final SizeRepository sizeRepository;
     private final CategoryRepository categoryRepository;
 
-    @PostConstruct
+//    @PostConstruct
     public void init() {
         initService.initCategory();
         initService.initSizes();
+        initService.initProducts();
     }
 
     @Component
     @Transactional
     @RequiredArgsConstructor
-    static class InitService{
+    static class InitService {
         private final SizeRepository sizeRepository;
         private final CategoryRepository categoryRepository;
         private final ProductRepository productRepository;
         private final ClothesSizeRepository clothesSizeRepository;
+        private final ProductCategoryRepository productCategoryRepository;
 
         public void initSizes() {
             Size xxs = new Size();
@@ -93,6 +93,32 @@ public class InitDb {
 
             categoryRepository.save(man);
             categoryRepository.save(woman);
+        }
+
+        public void initProducts() {
+            Category category = categoryRepository.findByName("man").orElseThrow();
+            Size sizeL = sizeRepository.findBySizeType(L).orElseThrow();
+            Size sizeM = sizeRepository.findBySizeType(M).orElseThrow();
+            Size sizeS = sizeRepository.findBySizeType(S).orElseThrow();
+
+            for (int i = 0; i < 50; i++) {
+                Clothes product = new Clothes();
+                product.setImageUrl("https://res.cloudinary.com/dnkichj7u/image/upload/v1677161518/ji4l3fpqetznx28grfqi.jpg");
+                product.setName("SAMPLE");
+                product.setPrice(10000);
+                product.setDescription("sample description");
+                productRepository.save(product);
+
+                ClothesSize clothesSizeL = ClothesSize.createClothesSize(product, sizeL, 100);
+                ClothesSize clothesSizeM = ClothesSize.createClothesSize(product, sizeM, 200);
+                ClothesSize clothesSizeS = ClothesSize.createClothesSize(product, sizeS, 90);
+                clothesSizeRepository.save(clothesSizeL);
+                clothesSizeRepository.save(clothesSizeM);
+                clothesSizeRepository.save(clothesSizeS);
+
+                ProductCategory productCategory = ProductCategory.createProductCategory(product, category);
+                productCategoryRepository.save(productCategory);
+            }
         }
     }
 }

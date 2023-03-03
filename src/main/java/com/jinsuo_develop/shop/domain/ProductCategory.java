@@ -1,12 +1,14 @@
 package com.jinsuo_develop.shop.domain;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.util.List;
 
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter @Setter
 public class ProductCategory {
     @Id @GeneratedValue
@@ -21,20 +23,26 @@ public class ProductCategory {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    public void setProduct(Product product) {
+    public void changeProduct(Product product) {
         this.product = product;
         product.getProductCategories().add(this);
     }
 
-    public void setCategory(Category category) {
+    public void changeCategory(Category category) {
         this.category = category;
         category.getItemCategories().add(this);
     }
 
+    public ProductCategory(Product product, Category category) {
+        this.product = product;
+        this.category = category;
+    }
+
     // 생성 메서드
-    public static ProductCategory createProductCategory(Category category) {
+    public static ProductCategory createProductCategory(Product product, Category category) {
         ProductCategory productCategory = new ProductCategory();
-        productCategory.setCategory(category);
+        productCategory.changeCategory(category);
+        productCategory.changeProduct(product);
         return productCategory;
     }
 }

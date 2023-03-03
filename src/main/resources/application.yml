@@ -7,7 +7,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+#      ddl-auto: create
 
     properties:
       hibernate:
@@ -15,5 +15,5 @@ spring:
         default_batch_fetch_size: 100
 
 logging.level:
-  org.hibernate.SQL: debug
-  #org.hibernate.type: trace
+#  org.hibernate.SQL: debug
+  org.hibernate.type: trace
